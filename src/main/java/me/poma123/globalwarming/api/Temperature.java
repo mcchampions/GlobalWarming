@@ -42,14 +42,11 @@ public class Temperature {
     }
 
     public double getConvertedValue() {
-        switch (tempType) {
-            case FAHRENHEIT:
-                return getFahrenheitValue();
-            case KELVIN:
-                return getKelvinValue();
-            default:
-                return celsiusValue;
-        }
+        return switch (tempType) {
+            case FAHRENHEIT -> getFahrenheitValue();
+            case KELVIN -> getKelvinValue();
+            default -> celsiusValue;
+        };
     }
 
     @Nonnull
