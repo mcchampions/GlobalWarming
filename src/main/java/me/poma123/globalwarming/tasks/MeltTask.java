@@ -52,7 +52,12 @@ public class MeltTask extends MechanicTask {
                         state.setType(Material.AIR);
                     }
 
-                    GlobalWarmingPlugin.getInstance().getServer().getPluginManager().callEvent(new BlockFadeEvent(current, state));
+                    BlockFadeEvent event = new BlockFadeEvent(current, state);
+                    GlobalWarmingPlugin.getInstance().getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled()) {
+                        state.update(true);
+                    }
                 }
             }
         }
@@ -65,7 +70,7 @@ public class MeltTask extends MechanicTask {
         for (String worldName : enabledWorlds) {
             World w = Bukkit.getWorld(worldName);
 
-            if (w != null && GlobalWarmingPlugin.getRegistry().isWorldEnabled(w.getName()) && w.getEnvironment() == World.Environment.NORMAL && !w.getPlayers().isEmpty() && w.getLoadedChunks().length > 0) {
+            if (w != null && w.getEnvironment() == World.Environment.NORMAL && !w.getPlayers().isEmpty() && w.getLoadedChunks().length > 0) {
                 double random = rnd.nextDouble();
 
                 if (random < chance) {

@@ -3,6 +3,7 @@ package me.poma123.globalwarming;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 import org.bstats.bukkit.Metrics;
@@ -10,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -22,6 +24,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemConsumptionHandler;
@@ -32,13 +35,17 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 
+import me.poma123.globalwarming.api.PollutionManager;
 import me.poma123.globalwarming.api.TemperatureType;
 import me.poma123.globalwarming.commands.GlobalWarmingCommand;
 import me.poma123.globalwarming.items.CinnabariteResource;
 import me.poma123.globalwarming.items.EcoAnalyzer;
 import me.poma123.globalwarming.items.machines.AirCompressor;
 import me.poma123.globalwarming.items.machines.AirPurifier;
+import me.poma123.globalwarming.items.machines.ClimateController;
+import me.poma123.globalwarming.items.machines.SolarPanel;
 import me.poma123.globalwarming.items.machines.TemperatureMeter;
+import me.poma123.globalwarming.listeners.CropGrowthListener;
 import me.poma123.globalwarming.listeners.PollutionListener;
 import me.poma123.globalwarming.listeners.WorldListener;
 import me.poma123.globalwarming.tasks.BurnTask;
@@ -109,6 +116,7 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         command.register();
         Bukkit.getPluginManager().registerEvents(new PollutionListener(), this);
         Bukkit.getPluginManager().registerEvents(new WorldListener(), this);
+        Bukkit.getPluginManager().registerEvents(new CropGrowthListener(), this);
     }
 
     private void registerItems() {
@@ -202,6 +210,18 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
                 null, new ItemStack(Material.STICK), null,
                 null, new ItemStack(Material.GLASS_PANE), null
         }).register(this);
+
+        new SolarPanel(itemGroup, Items.SOLAR_PANEL, RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[]{
+                new ItemStack(Material.GLASS), new ItemStack(Material.GLASS), new ItemStack(Material.GLASS),
+                SlimefunItems.SOLAR_GENERATOR, Items.FILTER, SlimefunItems.SOLAR_GENERATOR,
+                SlimefunItems.ALUMINUM_BRASS_INGOT, SlimefunItems.BATTERY, SlimefunItems.ALUMINUM_BRASS_INGOT
+        }).register(this);
+
+        new ClimateController(itemGroup, Items.CLIMATE_CONTROLLER, RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[]{
+                SlimefunItems.REINFORCED_ALLOY_INGOT, Items.THERMOMETER, SlimefunItems.REINFORCED_ALLOY_INGOT,
+                SlimefunItems.ELECTRIC_MOTOR, SlimefunItems.COOLING_UNIT, SlimefunItems.ELECTRIC_MOTOR,
+                SlimefunItems.REINFORCED_ALLOY_INGOT, SlimefunItems.SMALL_CAPACITOR, SlimefunItems.REINFORCED_ALLOY_INGOT
+        }).register(this);
     }
 
     private void registerResearches() {
@@ -213,6 +233,8 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         registerResearch("mercury", 69696974, "水银", 12, Items.CINNABARITE, Items.MERCURY);
         registerResearch("air_purifier", 69696975, "空气净化器", 16, Items.AIR_PURIFIER);
         registerResearch("eco_analyzer", 69696976, "环境分析仪", 2, Items.ECO_ANALYZER);
+        registerResearch("solar_panel", 69696977, "太阳能板", 20, Items.SOLAR_PANEL);
+        registerResearch("climate_controller", 69696978, "气候控制器", 35, Items.CLIMATE_CONTROLLER);
     }
 
     private void scheduleTasks() {
@@ -244,15 +266,16 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         temperatureManager.runCalculationTask(0, 100);
 
         if (cfg.getOrSetDefault("player-experience.action-bar-hud", true)) {
+            final TemperatureType hudTempType = parseTemperatureScale(messages.getString("temperature-scale"));
             Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
                 for (String w : registry.getEnabledWorlds()) {
                     World world = Bukkit.getWorld(w);
-                    if (world == null || !registry.isWorldEnabled(w) || world.getPlayers().isEmpty()) {
+                    if (world == null || world.getPlayers().isEmpty()) {
                         continue;
                     }
                     for (Player p : world.getPlayers()) {
-                        String tempStr = temperatureManager.getTemperatureString(p.getLocation(), TemperatureType.CELSIUS);
-                        String airStr = temperatureManager.getAirQualityString(world, TemperatureType.CELSIUS);
+                        String tempStr = temperatureManager.getTemperatureString(p.getLocation(), hudTempType);
+                        String airStr = temperatureManager.getAirQualityString(world, hudTempType);
                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                                 TextComponent.fromLegacyText(ChatColors.color(
                                         tempStr + " &8| &7环境: " + airStr)));
@@ -260,6 +283,50 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
                 }
             }, 20, 40);
         }
+
+        // Ambient particle effects based on pollution level — only for researched players
+        final Research particleResearch = registry.getResearchNeededForPlayerMechanics();
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (String w : registry.getEnabledWorlds()) {
+                World world = Bukkit.getWorld(w);
+                if (world == null || world.getPlayers().isEmpty()) {
+                    continue;
+                }
+                double pollution = PollutionManager.getPollutionInWorld(world);
+                if (pollution <= 5) {
+                    continue;
+                }
+
+                Particle particle;
+                int count;
+                if (pollution > 50) {
+                    particle = Particle.ASH;
+                    count = 3;
+                } else if (pollution > 20) {
+                    particle = Particle.WHITE_ASH;
+                    count = 1;
+                } else {
+                    particle = Particle.MYCELIUM;
+                    count = 1;
+                }
+
+                for (Player p : world.getPlayers()) {
+                    if (particleResearch != null) {
+                        var profile = PlayerProfile.find(p);
+                        if (profile.isPresent() && !profile.get().hasUnlocked(particleResearch)) {
+                            continue;
+                        }
+                    }
+
+                    Location loc = p.getLocation().add(
+                        ThreadLocalRandom.current().nextDouble(-3, 3),
+                        ThreadLocalRandom.current().nextDouble(1, 4),
+                        ThreadLocalRandom.current().nextDouble(-3, 3)
+                    );
+                    p.spawnParticle(particle, loc, count, 0, 0, 0, 0);
+                }
+            }
+        }, 20, 60);
     }
 
     private void registerResearch(String key, int id, String name, int defaultCost, ItemStack... items) {
@@ -308,6 +375,14 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
 
     public static Config getMessagesConfig() {
         return instance.messages;
+    }
+
+    private static TemperatureType parseTemperatureScale(String scale) {
+        try {
+            return TemperatureType.valueOf(scale);
+        } catch (IllegalArgumentException e) {
+            return TemperatureType.CELSIUS;
+        }
     }
 
 }

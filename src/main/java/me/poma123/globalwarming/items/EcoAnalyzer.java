@@ -2,9 +2,11 @@ package me.poma123.globalwarming.items;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -18,6 +20,8 @@ import me.poma123.globalwarming.api.TemperatureType;
 
 public class EcoAnalyzer extends SlimefunItem {
 
+    private static final NamespacedKey ECO_TYPE_KEY = new NamespacedKey(GlobalWarmingPlugin.getInstance(), "eco_type");
+
     @ParametersAreNonnullByDefault
     public EcoAnalyzer(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
@@ -27,7 +31,8 @@ public class EcoAnalyzer extends SlimefunItem {
     public void preRegister() {
         addItemHandler((ItemUseHandler) e -> {
             Player p = e.getPlayer();
-            String typeStr = getStoredType(p);
+            ItemStack held = e.getItem();
+            String typeStr = getStoredType(held);
 
             TemperatureType type;
             try {
@@ -43,11 +48,9 @@ public class EcoAnalyzer extends SlimefunItem {
             };
 
             if (p.isSneaking()) {
-                // Shift+right-click: cycle temperature unit
-                storeType(p, next.name());
+                storeType(held, next.name());
                 p.sendMessage(ChatColors.color("&7温度单位: &e" + next.getName()));
             } else {
-                // Right-click: show environment info
                 String tempStr = GlobalWarmingPlugin.getTemperatureManager().getTemperatureString(p.getLocation(), type);
                 String airStr = GlobalWarmingPlugin.getTemperatureManager().getAirQualityString(p.getWorld(), type);
                 p.sendMessage(ChatColors.color("&a=== 环境分析 ==="));
@@ -60,22 +63,20 @@ public class EcoAnalyzer extends SlimefunItem {
         });
     }
 
-    private String getStoredType(Player p) {
-        ItemStack item = p.getInventory().getItemInMainHand();
+    private String getStoredType(ItemStack item) {
         if (item.hasItemMeta()) {
             ItemMeta meta = item.getItemMeta();
-            if (meta != null && meta.getPersistentDataContainer().has(new org.bukkit.NamespacedKey(GlobalWarmingPlugin.getInstance(), "eco_type"), org.bukkit.persistence.PersistentDataType.STRING)) {
-                return meta.getPersistentDataContainer().get(new org.bukkit.NamespacedKey(GlobalWarmingPlugin.getInstance(), "eco_type"), org.bukkit.persistence.PersistentDataType.STRING);
+            if (meta != null && meta.getPersistentDataContainer().has(ECO_TYPE_KEY, PersistentDataType.STRING)) {
+                return meta.getPersistentDataContainer().get(ECO_TYPE_KEY, PersistentDataType.STRING);
             }
         }
         return "CELSIUS";
     }
 
-    private void storeType(Player p, String type) {
-        ItemStack item = p.getInventory().getItemInMainHand();
+    private void storeType(ItemStack item, String type) {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.getPersistentDataContainer().set(new org.bukkit.NamespacedKey(GlobalWarmingPlugin.getInstance(), "eco_type"), org.bukkit.persistence.PersistentDataType.STRING, type);
+            meta.getPersistentDataContainer().set(ECO_TYPE_KEY, PersistentDataType.STRING, type);
             item.setItemMeta(meta);
         }
     }

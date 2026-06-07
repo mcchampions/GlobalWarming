@@ -1,6 +1,8 @@
 package me.poma123.globalwarming;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,36 +33,66 @@ public class TemperatureManager {
     public static final String HOT = "☀";
     public static final String COLD = "❄";
 
+    private static final BiomeTemperature DEFAULT_BIOME_TEMP = new BiomeTemperature(15, 0);
+
     private final Map<String, Map<Biome, Double>> worldTemperatureChangeFactorMap = new ConcurrentHashMap<>();
 
     protected void runCalculationTask(long delay, long interval) {
+        // Cache biome list once — immutable, no need to re-fetch each cycle
+        final List<Biome> allBiomes = new ArrayList<>();
+        RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME).forEach(allBiomes::add);
+
         Bukkit.getScheduler().runTaskTimerAsynchronously(GlobalWarmingPlugin.getInstance(), () -> {
 
             for (String w : GlobalWarmingPlugin.getRegistry().getEnabledWorlds()) {
-                if (GlobalWarmingPlugin.getRegistry().isWorldEnabled(w)) {
-                    World world = Bukkit.getWorld(w);
+                World world = Bukkit.getWorld(w);
 
-                    if (world != null) {
-                        // Apply natural pollution decay (even without players)
-                        double decayRate = GlobalWarmingPlugin.getRegistry().getPollutionNaturalDecay();
-                        if (decayRate > 0) {
-                            PollutionManager.descendPollutionInWorld(world, decayRate);
-                        }
+                if (world != null) {
+                    // Apply natural pollution decay (even without players)
+                    double decayRate = GlobalWarmingPlugin.getRegistry().getPollutionNaturalDecay();
+                    if (decayRate > 0) {
+                        PollutionManager.descendPollutionInWorld(world, decayRate);
+                    }
 
-                        if (!world.getPlayers().isEmpty()) {
-                            Map<Biome, Double> map = new HashMap<>();
-                            boolean isNormalEnvironment = world.getEnvironment() == World.Environment.NORMAL;
+                    if (!world.getPlayers().isEmpty()) {
+                        Map<Biome, Double> map = new HashMap<>(allBiomes.size());
+                        boolean isNormalEnvironment = world.getEnvironment() == World.Environment.NORMAL;
 
-                            BiomeMap<BiomeTemperature> biomeMap = GlobalWarmingPlugin.getRegistry().getBiomeMap();
-                            for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
-                                BiomeTemperature biomeTemperature = biomeMap.getOrDefault(biome, new BiomeTemperature(15, 0));
-                                Temperature defaultTemperature = new Temperature(biomeTemperature.getTemperature());
-                                Temperature newTemp = isNormalEnvironment ? addTemperatureChangeFactors(world, biome, defaultTemperature) : defaultTemperature;
-
-                                map.put(biome, newTemp.getCelsiusValue());
+                        // Pre-compute world-level values — avoid ~60 redundant lookups per world
+                        BiomeMap<BiomeTemperature> biomeMap = GlobalWarmingPlugin.getRegistry().getBiomeMap();
+                        double pollutionEffect = isNormalEnvironment
+                            ? PollutionManager.getPollutionInWorld(world) * GlobalWarmingPlugin.getRegistry().getPollutionMultiply()
+                            : 0;
+                        double stormDrop = isNormalEnvironment && world.hasStorm()
+                            ? GlobalWarmingPlugin.getRegistry().getStormTemperatureDrop()
+                            : 0;
+                        boolean daytime = isDaytime(world);
+                        double nightFraction = 0;
+                        if (isNormalEnvironment && !daytime) {
+                            double nightTime = world.getTime() - 12300F;
+                            if (nightTime > 5775) {
+                                nightTime = 5775 - (nightTime - 5775);
                             }
-                            worldTemperatureChangeFactorMap.put(w, map);
+                            nightFraction = nightTime / 5775;
                         }
+
+                        for (Biome biome : allBiomes) {
+                            BiomeTemperature biomeTemperature = biomeMap.getOrDefault(biome, DEFAULT_BIOME_TEMP);
+                            double celsius = biomeTemperature.getTemperature();
+
+                            if (isNormalEnvironment) {
+                                if (nightFraction > 0) {
+                                    double nightDrop = biomeTemperature.getMaxTemperatureDropAtNight();
+                                    celsius -= nightDrop * nightFraction;
+                                } else if (stormDrop > 0) {
+                                    celsius -= stormDrop;
+                                }
+                                celsius += pollutionEffect;
+                            }
+
+                            map.put(biome, celsius);
+                        }
+                        worldTemperatureChangeFactorMap.put(w, map);
                     }
                 }
             }
@@ -69,7 +101,7 @@ public class TemperatureManager {
 
     public Temperature getTemperatureAtLocation(@Nonnull Location loc) {
         World world = loc.getWorld();
-        Biome biome = loc.getBlock().getBiome();
+        Biome biome = world.getComputedBiome(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 
         Map<Biome, Double> map = worldTemperatureChangeFactorMap.get(world.getName());
 
@@ -117,27 +149,23 @@ public class TemperatureManager {
             return "&c该世界不可用";
         }
 
-        Temperature temp = new Temperature(15.0);
-
-        double celsiusDifference = (PollutionManager.getPollutionInWorld(world) * GlobalWarmingPlugin.getRegistry().getPollutionMultiply());
-        double currentValue = temp.getCelsiusValue() + celsiusDifference;
-        double defaultValue = temp.getCelsiusValue();
+        double pollutionEffect = PollutionManager.getPollutionInWorld(world) * GlobalWarmingPlugin.getRegistry().getPollutionMultiply();
         String prefix;
 
-        if (celsiusDifference <= -1.5 || celsiusDifference >= 1.5) {
+        if (pollutionEffect <= -1.5 || pollutionEffect >= 1.5) {
             prefix = "&c";
-        } else if (celsiusDifference <= -0.5 || celsiusDifference >= 0.5) {
+        } else if (pollutionEffect <= -0.5 || pollutionEffect >= 0.5) {
             prefix = "&e";
-        } else if (celsiusDifference < 0 || celsiusDifference > 0) {
+        } else if (pollutionEffect < 0 || pollutionEffect > 0) {
             prefix = "&a";
         } else {
             prefix = "&f";
         }
 
-        double difference = celsiusDifference;
+        double difference = pollutionEffect;
 
         if (tempType != TemperatureType.CELSIUS) {
-            difference = getDifference(currentValue, defaultValue, tempType);
+            difference = getDifference(15.0 + pollutionEffect, 15.0, tempType);
         }
 
         prefix = prefix + (difference > 0 ? "+" : "");
@@ -148,7 +176,7 @@ public class TemperatureManager {
     public Temperature addTemperatureChangeFactors(@Nonnull World world, @Nonnull Biome biome, @Nonnull Temperature temperature) {
         BiomeMap<BiomeTemperature> biomeMap = GlobalWarmingPlugin.getRegistry().getBiomeMap();
         double celsiusValue = temperature.getCelsiusValue();
-        double nightDrop = biomeMap.getOrDefault(biome, new BiomeTemperature(15, 0)).getMaxTemperatureDropAtNight();
+        double nightDrop = biomeMap.getOrDefault(biome, DEFAULT_BIOME_TEMP).getMaxTemperatureDropAtNight();
 
         if (world.getEnvironment() == World.Environment.NORMAL) {
             if (!isDaytime(world)) {

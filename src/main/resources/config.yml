@@ -79,9 +79,9 @@ pollution:
     machines:
       AIR_COMPRESSOR: 0.05
     # 植树
-    tree-growth: 0.005
+    tree-growth: 0.008
     # 自然衰减(每个计算周期)
-    natural-decay: 0.003
+    natural-decay: 0.015
 
 # 温度选项
 temperature-options:

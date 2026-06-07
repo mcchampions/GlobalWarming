@@ -1,6 +1,10 @@
 package me.poma123.globalwarming.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -158,11 +162,25 @@ public class PollutionManager {
         return false;
     }
 
+    private static final Set<Config> dirtyConfigs = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private static volatile boolean flushScheduled;
+
     private static void saveConfigAsync(Config config) {
-        if (!Bukkit.isPrimaryThread()) {
-            Bukkit.getScheduler().runTask(GlobalWarmingPlugin.getInstance(), (Runnable) config::save);
-        } else {
-            config.save();
+        dirtyConfigs.add(config);
+        scheduleFlush();
+    }
+
+    private static void scheduleFlush() {
+        if (!flushScheduled) {
+            flushScheduled = true;
+            Bukkit.getScheduler().runTaskLater(GlobalWarmingPlugin.getInstance(), () -> {
+                flushScheduled = false;
+                List<Config> toSave = new ArrayList<>(dirtyConfigs);
+                dirtyConfigs.clear();
+                for (Config config : toSave) {
+                    config.save();
+                }
+            }, 100); // Flush every 5 seconds (100 ticks)
         }
     }
 

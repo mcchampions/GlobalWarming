@@ -37,7 +37,7 @@ public class BurnTask extends MechanicTask {
         for (String worldName : enabledWorlds) {
             World w = Bukkit.getWorld(worldName);
 
-            if (w != null && GlobalWarmingPlugin.getRegistry().isWorldEnabled(w.getName()) && w.getEnvironment() == World.Environment.NORMAL && !w.getPlayers().isEmpty()) {
+            if (w != null && w.getEnvironment() == World.Environment.NORMAL && !w.getPlayers().isEmpty()) {
                 for (Player p : w.getPlayers()) {
                     if (p.getFireTicks() > 0) {
                         continue;
