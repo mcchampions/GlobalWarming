@@ -378,11 +378,14 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
     }
 
     private static TemperatureType parseTemperatureScale(String scale) {
-        try {
-            return TemperatureType.valueOf(scale);
-        } catch (IllegalArgumentException e) {
-            return TemperatureType.CELSIUS;
+        if (scale != null) {
+            try {
+                return TemperatureType.valueOf(scale);
+            } catch (IllegalArgumentException e) {
+                // Fall through to default
+            }
         }
+        return TemperatureType.CELSIUS;
     }
 
 }
