@@ -190,6 +190,15 @@
   },
   {
     "value": {
+      "temperature": 8,
+      "max-temp-drop-at-night": 0
+    },
+    "biomes": [
+      "minecraft:deep_dark"
+    ]
+  },
+  {
+    "value": {
       "temperature": 10,
       "max-temp-drop-at-night": 14
     },
@@ -308,6 +317,15 @@
   {
     "value": {
       "temperature": 18,
+      "max-temp-drop-at-night": 7
+    },
+    "biomes": [
+      "minecraft:mangrove_swamp"
+    ]
+  },
+  {
+    "value": {
+      "temperature": 18,
       "max-temp-drop-at-night": 12
     },
     "biomes": [
@@ -348,6 +366,15 @@
     },
     "biomes": [
       "minecraft:deep_lukewarm_ocean"
+    ]
+  },
+  {
+    "value": {
+      "temperature": 20,
+      "max-temp-drop-at-night": 10
+    },
+    "biomes": [
+      "minecraft:cherry_grove"
     ]
   },
   {
