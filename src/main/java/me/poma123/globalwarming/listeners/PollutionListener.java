@@ -53,13 +53,11 @@ public class PollutionListener implements Listener {
         ItemStack[] inputs = new ItemStack[]{};
 
         if ((e.getProcessor().getOwner() instanceof Reactor || e.getProcessor().getOwner() instanceof AGenerator)
-                && e.getOperation() instanceof FuelOperation) {
+            && e.getOperation() instanceof FuelOperation operation) {
             id = e.getProcessor().getOwner().getId();
-            FuelOperation operation = (FuelOperation) e.getOperation();
             inputs = new ItemStack[]{ operation.getIngredient() };
-        } else if (e.getProcessor().getOwner() instanceof AContainer && e.getOperation() instanceof CraftingOperation) {
+        } else if (e.getProcessor().getOwner() instanceof AContainer && e.getOperation() instanceof CraftingOperation operation) {
             id = e.getProcessor().getOwner().getId();
-            CraftingOperation operation = (CraftingOperation) e.getOperation();
             inputs = operation.getIngredients();
         }
 
@@ -119,7 +117,7 @@ public class PollutionListener implements Listener {
 
             double amount = TemperatureManager.fixDouble(e.getNewValue() * GlobalWarmingPlugin.getRegistry().getPollutionMultiply());
             Double previous = tempPollutionValues.put(world.getName(), amount);
-            if (previous != null && previous.equals(amount)) {
+            if (Double.valueOf(amount).equals(previous)) {
                 return;
             }
 
@@ -144,7 +142,7 @@ public class PollutionListener implements Listener {
         for (Player p : world.getPlayers()) {
             p.sendMessage(ChatColors.color(GlobalWarmingPlugin.getMessagesConfig().getString("messages.climate-change").replace("%value%", difference)));
 
-            if (news.length() > 0) {
+            if (!news.isEmpty()) {
                 p.sendMessage(news);
             }
         }

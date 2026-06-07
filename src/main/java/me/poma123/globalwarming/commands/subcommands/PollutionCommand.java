@@ -27,11 +27,11 @@ class PollutionCommand extends SubCommand {
                 World world = Bukkit.getWorld(args[2]);
 
                 if (world != null && GlobalWarmingPlugin.getRegistry().isWorldEnabled(world.getName())) {
-                    if (args[1].equalsIgnoreCase("get")) {
+                    if ("get".equalsIgnoreCase(args[1])) {
                         double pollution = TemperatureManager.fixDouble(PollutionManager.getPollutionInWorld(world), 2);
 
                         sender.sendMessage(ChatColors.color("&b世界 &a" + world.getName() + " &b的污染值为: &a" + pollution));
-                    } else if (args[1].equalsIgnoreCase("set")) {
+                    } else if ("set".equalsIgnoreCase(args[1])) {
                         if (args.length > 3) {
                             setPollution(sender, world, args);
                         } else {

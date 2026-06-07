@@ -2,7 +2,6 @@ package me.poma123.globalwarming;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -57,7 +56,7 @@ public class Registry {
     private double stormTemperatureDrop;
     private double treeGrowthAbsorption;
     private double animalBreedPollution;
-    private Research researchNeededForPlayerMechanics = null;
+    private Research researchNeededForPlayerMechanics;
 
     public void load(Config cfg, Config messages) {
         // Setting up biome map

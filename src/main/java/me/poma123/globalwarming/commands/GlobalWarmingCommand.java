@@ -23,7 +23,7 @@ import me.poma123.globalwarming.commands.subcommands.SubCommands;
 
 public class GlobalWarmingCommand implements CommandExecutor, Listener {
 
-    private boolean registered = false;
+    private boolean registered;
     private final GlobalWarmingPlugin plugin;
     private final List<SubCommand> commands = new LinkedList<>();
 
@@ -79,7 +79,7 @@ public class GlobalWarmingCommand implements CommandExecutor, Listener {
 
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent e) {
-        if (e.getMessage().equalsIgnoreCase("/help globalwarming")) {
+        if ("/help globalwarming".equalsIgnoreCase(e.getMessage())) {
             sendHelp(e.getPlayer());
             e.setCancelled(true);
         }
