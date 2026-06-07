@@ -40,8 +40,11 @@ public class FireTask extends MechanicTask {
                 int x = (chunk.getX() << 4) + rnd.nextInt(16);
                 int z = (chunk.getZ() << 4) + rnd.nextInt(16);
 
-                Block current = world.getHighestBlockAt(x, z).getRelative(BlockFace.UP);
-                if (GlobalWarmingPlugin.getTemperatureManager().getTemperatureAtLocation(current.getLocation()).getCelsiusValue() >= minimumTemperature) {
+                Block highest = world.getHighestBlockAt(x, z);
+                Block current = highest.getRelative(BlockFace.UP);
+                if (current.getType().isAir()
+                    && !highest.isLiquid()
+                    && GlobalWarmingPlugin.getTemperatureManager().getTemperatureAtLocation(current.getLocation()).getCelsiusValue() >= minimumTemperature) {
                     current.setType(Material.FIRE);
                 }
             }

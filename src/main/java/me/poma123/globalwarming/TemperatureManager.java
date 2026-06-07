@@ -40,19 +40,27 @@ public class TemperatureManager {
                 if (GlobalWarmingPlugin.getRegistry().isWorldEnabled(w)) {
                     World world = Bukkit.getWorld(w);
 
-                    if (world != null && !world.getPlayers().isEmpty()) {
-                        Map<Biome, Double> map = new HashMap<>();
-                        boolean isNormalEnvironment = world.getEnvironment() == World.Environment.NORMAL;
-
-                        BiomeMap<BiomeTemperature> biomeMap = GlobalWarmingPlugin.getRegistry().getBiomeMap();
-                        for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
-                            BiomeTemperature biomeTemperature = biomeMap.getOrDefault(biome, new BiomeTemperature(15, 0));
-                            Temperature defaultTemperature = new Temperature(biomeTemperature.getTemperature());
-                            Temperature newTemp = isNormalEnvironment ? addTemperatureChangeFactors(world, biome, defaultTemperature) : defaultTemperature;
-
-                            map.put(biome, newTemp.getCelsiusValue());
+                    if (world != null) {
+                        // Apply natural pollution decay (even without players)
+                        double decayRate = GlobalWarmingPlugin.getRegistry().getPollutionNaturalDecay();
+                        if (decayRate > 0) {
+                            PollutionManager.descendPollutionInWorld(world, decayRate);
                         }
-                        worldTemperatureChangeFactorMap.put(w, map);
+
+                        if (!world.getPlayers().isEmpty()) {
+                            Map<Biome, Double> map = new HashMap<>();
+                            boolean isNormalEnvironment = world.getEnvironment() == World.Environment.NORMAL;
+
+                            BiomeMap<BiomeTemperature> biomeMap = GlobalWarmingPlugin.getRegistry().getBiomeMap();
+                            for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
+                                BiomeTemperature biomeTemperature = biomeMap.getOrDefault(biome, new BiomeTemperature(15, 0));
+                                Temperature defaultTemperature = new Temperature(biomeTemperature.getTemperature());
+                                Temperature newTemp = isNormalEnvironment ? addTemperatureChangeFactors(world, biome, defaultTemperature) : defaultTemperature;
+
+                                map.put(biome, newTemp.getCelsiusValue());
+                            }
+                            worldTemperatureChangeFactorMap.put(w, map);
+                        }
                     }
                 }
             }

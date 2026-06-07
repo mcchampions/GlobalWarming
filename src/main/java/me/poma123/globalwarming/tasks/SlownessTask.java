@@ -61,21 +61,19 @@ public class SlownessTask extends MechanicTask {
                     if (random < chance) {
                         Temperature temp = GlobalWarmingPlugin.getTemperatureManager().getTemperatureAtLocation(p.getLocation());
                         double celsiusValue = temp.getCelsiusValue();
-                        int amplifier;
-                        int duration;
 
-                        if (celsiusValue <= -30 || celsiusValue >= 50) {
-                            amplifier = 2;
-                            duration = 100;
-                        } else if (celsiusValue <= -20 || celsiusValue >= 40) {
-                            amplifier = 1;
-                            duration = 60;
-                        } else if (celsiusValue <= -10 || celsiusValue >= 36) {
-                            amplifier = 0;
-                            duration = 40;
+                        double deviation;
+                        if (celsiusValue > 28) {
+                            deviation = celsiusValue - 28;
+                        } else if (celsiusValue < 10) {
+                            deviation = 10 - celsiusValue;
                         } else {
                             continue;
                         }
+
+                        // Smooth scale: deviation 0→0 effect, deviation 30→amplifier 2
+                        int amplifier = (int) Math.min(2, deviation / 15);
+                        int duration = (int) Math.min(140, 30 + deviation * 3.5);
 
                         applyEffect(p, duration, amplifier);
                     }

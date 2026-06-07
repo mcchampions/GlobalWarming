@@ -10,9 +10,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -22,6 +27,7 @@ import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemConsumptionHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
+import io.github.thebusybiscuit.slimefun4.libraries.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
@@ -29,11 +35,14 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.poma123.globalwarming.api.TemperatureType;
 import me.poma123.globalwarming.commands.GlobalWarmingCommand;
 import me.poma123.globalwarming.items.CinnabariteResource;
+import me.poma123.globalwarming.items.EcoAnalyzer;
 import me.poma123.globalwarming.items.machines.AirCompressor;
+import me.poma123.globalwarming.items.machines.AirPurifier;
 import me.poma123.globalwarming.items.machines.TemperatureMeter;
 import me.poma123.globalwarming.listeners.PollutionListener;
 import me.poma123.globalwarming.listeners.WorldListener;
 import me.poma123.globalwarming.tasks.BurnTask;
+import me.poma123.globalwarming.tasks.ComfortTask;
 import me.poma123.globalwarming.tasks.FireTask;
 import me.poma123.globalwarming.tasks.MeltTask;
 import me.poma123.globalwarming.tasks.SlownessTask;
@@ -181,6 +190,18 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
                 new ItemStack(Material.GLASS), SlimefunItems.GOLD_PAN, new ItemStack(Material.GLASS),
                 null, new ItemStack(Material.GLASS), null
         }).register(this);
+
+        new AirPurifier(itemGroup, Items.AIR_PURIFIER, RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[]{
+                new ItemStack(Material.GLASS), Items.FILTER, new ItemStack(Material.GLASS),
+                new ItemStack(Material.GLASS), new ItemStack(Material.POTTED_LILY_OF_THE_VALLEY), new ItemStack(Material.GLASS),
+                null, new ItemStack(Material.IRON_BARS), null
+        }).register(this);
+
+        new EcoAnalyzer(itemGroup, Items.ECO_ANALYZER, RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[]{
+                null, Items.THERMOMETER, null,
+                null, new ItemStack(Material.STICK), null,
+                null, new ItemStack(Material.GLASS_PANE), null
+        }).register(this);
     }
 
     private void registerResearches() {
@@ -190,6 +211,8 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         registerResearch("canisters", 69696972, "污染存储", 6, Items.EMPTY_CANISTER, Items.CO2_CANISTER);
         registerResearch("filter", 69696973, "过滤", 8, Items.FILTER);
         registerResearch("mercury", 69696974, "水银", 12, Items.CINNABARITE, Items.MERCURY);
+        registerResearch("air_purifier", 69696975, "空气净化器", 16, Items.AIR_PURIFIER);
+        registerResearch("eco_analyzer", 69696976, "环境分析仪", 2, Items.ECO_ANALYZER);
     }
 
     private void scheduleTasks() {
@@ -215,7 +238,28 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
             new BurnTask(cfg.getOrSetDefault("mechanics.BURN.chance", 0.8)).scheduleRepeating(0, 200);
         }
 
+        // Comfort bonus in clean, optimal-temperature environments
+        new ComfortTask(0.3).scheduleRepeating(0, 200);
+
         temperatureManager.runCalculationTask(0, 100);
+
+        if (cfg.getOrSetDefault("player-experience.action-bar-hud", true)) {
+            Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+                for (String w : registry.getEnabledWorlds()) {
+                    World world = Bukkit.getWorld(w);
+                    if (world == null || !registry.isWorldEnabled(w) || world.getPlayers().isEmpty()) {
+                        continue;
+                    }
+                    for (Player p : world.getPlayers()) {
+                        String tempStr = temperatureManager.getTemperatureString(p.getLocation(), TemperatureType.CELSIUS);
+                        String airStr = temperatureManager.getAirQualityString(world, TemperatureType.CELSIUS);
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                                TextComponent.fromLegacyText(ChatColors.color(
+                                        tempStr + " &8| &7环境: " + airStr)));
+                    }
+                }
+            }, 20, 40);
+        }
     }
 
     private void registerResearch(String key, int id, String name, int defaultCost, ItemStack... items) {

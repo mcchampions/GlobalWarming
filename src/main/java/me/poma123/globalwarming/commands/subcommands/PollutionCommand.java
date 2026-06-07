@@ -1,12 +1,13 @@
 package me.poma123.globalwarming.commands.subcommands;
 
+import java.util.regex.Pattern;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import io.github.thebusybiscuit.slimefun4.libraries.dough.common.ChatColors;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.common.CommonPatterns;
 
 import me.poma123.globalwarming.GlobalWarmingPlugin;
 import me.poma123.globalwarming.TemperatureManager;
@@ -49,28 +50,31 @@ class PollutionCommand extends SubCommand {
         }
     }
 
-    private void setPollution(CommandSender sender, World world, String[] args) {
-        int amount = parseAmount(args);
+    private static final Pattern DECIMAL_PATTERN = Pattern.compile("^\\d+(\\.\\d+)?$");
 
-        if (amount > -1) {
+    private void setPollution(CommandSender sender, World world, String[] args) {
+        double amount = parseAmount(args);
+
+        if (!Double.isNaN(amount)) {
             if (PollutionManager.setPollutionInWorld(world, amount)) {
-                sender.sendMessage(ChatColors.color("&b已设置世界 '&a%world%&b' 的污染值为 '&a%newValue%&b'").replace("%newValue%", amount + "").replace("%world%", world.getName()));
+                String displayValue = TemperatureManager.fixDouble(amount, 2) + "";
+                sender.sendMessage(ChatColors.color("&b已设置世界 '&a%world%&b' 的污染值为 '&a%newValue%&b'").replace("%newValue%", displayValue).replace("%world%", world.getName()));
             } else {
-                // This is nearly impossible, but let us check
                 sender.sendMessage(ChatColors.color("&4该世界无法使用该指令"));
             }
         } else {
-            sender.sendMessage(ChatColors.color("&4%amount% &c不是一个有效的值").replace("%amount%", amount + ""));
+            sender.sendMessage(ChatColors.color("&4%amount% &c不是一个有效的值").replace("%amount%", args.length >= 4 ? args[3] : ""));
         }
     }
 
-    private int parseAmount(String[] args) {
-        int amount = -1;
-
-        if (args.length == 4 && CommonPatterns.NUMERIC.matcher(args[3]).matches()) {
-            amount = Integer.parseInt(args[3]);
+    private double parseAmount(String[] args) {
+        if (args.length >= 4 && DECIMAL_PATTERN.matcher(args[3]).matches()) {
+            try {
+                return Double.parseDouble(args[3]);
+            } catch (NumberFormatException e) {
+                return Double.NaN;
+            }
         }
-
-        return amount;
+        return Double.NaN;
     }
 }

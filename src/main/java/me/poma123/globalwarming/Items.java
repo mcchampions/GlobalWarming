@@ -21,6 +21,8 @@ public final class Items {
     public static final SlimefunItemStack CINNABARITE = new SlimefunItemStack("CINNABARITE", "d67a8a3d7d5aa5db00dff5c82f846ea0aeb7d645f0e467d7e9d9a18e9fa5b012", "&c朱砂");
     public static final SlimefunItemStack MERCURY = new SlimefunItemStack("MERCURY", Material.GRAY_DYE, "&7水银");
     public static final SlimefunItemStack FILTER = new SlimefunItemStack("AIR_COMPRESSOR_FILTER", Material.GUNPOWDER, "&7过滤器");
+    public static final SlimefunItemStack AIR_PURIFIER = new SlimefunItemStack("AIR_PURIFIER", Material.POTTED_LILY_OF_THE_VALLEY, "&a空气净化器", "", "&7被动净化周围空气", "&7无需电力 &8| &7放置即可工作");
+    public static final SlimefunItemStack ECO_ANALYZER = new SlimefunItemStack("ECO_ANALYZER", Material.STICK, "&a环境分析仪", "", "&7右键点击查看当前位置的", "&7温度和空气质量信息", "", "&e右键点击&7切换温度单位");
 
     static {
         ItemStack item = new ItemStack(Material.POTION);

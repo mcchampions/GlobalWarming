@@ -32,13 +32,13 @@ mechanics:
   # 减速
   SLOWNESS:
     # 是否启用
-    enabled: false
+    enabled: true
     # 几率 (0-1)
     chance: 0.8
   # 燃烧
   BURN:
     # 是否启用
-    enabled: false
+    enabled: true
     # 几率
     chance: 0.8
 
@@ -82,8 +82,15 @@ pollution:
       AIR_COMPRESSOR: 0.05
     # 植树
     tree-growth: 0.005
+    # 自然衰减(每个计算周期)
+    natural-decay: 0.003
 
 # 温度选项
 temperature-options:
   pollution-multiply: 0.002
   temperature-drop-during-storms: 8
+
+# 玩家体验
+player-experience:
+  # 在快捷栏上方显示温度信息
+  action-bar-hud: false

@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public class Registry {
 
     private final List<String> news = new ArrayList<>();
     private BiomeMap<BiomeTemperature> biomeMap;
-    private final Set<String> enabledWorlds = new HashSet<>();
+    private final Set<String> enabledWorlds = ConcurrentHashMap.newKeySet();
     private final Map<String, Config> worldConfigs = new HashMap<>();
     private final Map<Material, Double> pollutedVanillaItems = new EnumMap<>(Material.class);
     private final Map<String, Double> pollutedSlimefunItems = new HashMap<>();
@@ -56,6 +57,8 @@ public class Registry {
     private double stormTemperatureDrop;
     private double treeGrowthAbsorption;
     private double animalBreedPollution;
+    private double pollutionNaturalDecay;
+    private boolean actionBarHud;
     private Research researchNeededForPlayerMechanics;
 
     public void load(Config cfg, Config messages) {
@@ -172,14 +175,19 @@ public class Registry {
         stormTemperatureDrop = cfg.getOrSetDefault("temperature-options.temperature-drop-during-storms", 8);
         treeGrowthAbsorption = cfg.getOrSetDefault("pollution.absorption.tree-growth", 0.01);
         animalBreedPollution = cfg.getOrSetDefault("pollution.production.animal-breed", 0.007);
+        pollutionNaturalDecay = cfg.getOrSetDefault("pollution.absorption.natural-decay", 0.003);
+        actionBarHud = cfg.getOrSetDefault("player-experience.action-bar-hud", true);
 
         String researchKey = cfg.getString("needed-research-for-player-mechanics");
-        Optional<Research> tempResearch = Research.getResearch(new NamespacedKey(Slimefun.instance(), researchKey));
 
-        if (tempResearch.isPresent() && tempResearch.get().isEnabled()) {
-            researchNeededForPlayerMechanics = tempResearch.get();
-        } else {
-            GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "Could not load research \"{0}\"", new Object[] { researchKey });
+        if (researchKey != null && !researchKey.isEmpty()) {
+            Optional<Research> tempResearch = Research.getResearch(new NamespacedKey(Slimefun.instance(), researchKey));
+
+            if (tempResearch.isPresent() && tempResearch.get().isEnabled()) {
+                researchNeededForPlayerMechanics = tempResearch.get();
+            } else {
+                GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "Could not load research \"{0}\"", new Object[] { researchKey });
+            }
         }
     }
 
@@ -209,11 +217,7 @@ public class Registry {
     }
 
     public boolean isWorldEnabled(@Nonnull String worldName) {
-        if (Bukkit.getWorld(worldName) == null) {
-            enabledWorlds.remove(worldName);
-            return false;
-        }
-        return enabledWorlds.contains(worldName);
+        return Bukkit.getWorld(worldName) != null && enabledWorlds.contains(worldName);
     }
 
     public void registerWorld(World w, String worldName) {
@@ -294,6 +298,14 @@ public class Registry {
 
     public double getAnimalBreedPollution() {
         return animalBreedPollution;
+    }
+
+    public double getPollutionNaturalDecay() {
+        return pollutionNaturalDecay;
+    }
+
+    public boolean isActionBarHudEnabled() {
+        return actionBarHud;
     }
 
     public Research getResearchNeededForPlayerMechanics() {
