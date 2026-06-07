@@ -127,7 +127,7 @@ public class PollutionListener implements Listener {
     }
 
     private void sendNews(World world) {
-        TemperatureType messageTempType = TemperatureType.valueOf(GlobalWarmingPlugin.getMessagesConfig().getString("temperature-scale"));
+        TemperatureType messageTempType = parseScale(GlobalWarmingPlugin.getMessagesConfig().getString("temperature-scale"));
         String difference = GlobalWarmingPlugin.getTemperatureManager().getAirQualityString(world, messageTempType);
 
         String news = "";
@@ -188,5 +188,16 @@ public class PollutionListener implements Listener {
         absorptionValue += PollutionManager.isAbsorbentMachine(id);
 
         return absorptionValue;
+    }
+
+    private static TemperatureType parseScale(String scale) {
+        if (scale != null) {
+            try {
+                return TemperatureType.valueOf(scale);
+            } catch (IllegalArgumentException e) {
+                // Fall through
+            }
+        }
+        return TemperatureType.CELSIUS;
     }
 }

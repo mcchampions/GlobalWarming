@@ -24,7 +24,7 @@ public final class Items {
     public static final SlimefunItemStack AIR_PURIFIER = new SlimefunItemStack("AIR_PURIFIER", Material.POTTED_LILY_OF_THE_VALLEY, "&a空气净化器", "", "&7被动净化周围空气", "&7无需电力 &8| &7放置即可工作");
     public static final SlimefunItemStack ECO_ANALYZER = new SlimefunItemStack("ECO_ANALYZER", Material.STICK, "&a环境分析仪", "", "&7右键点击查看当前位置的", "&7温度和空气质量信息", "", "&e右键点击&7切换温度单位");
     public static final SlimefunItemStack SOLAR_PANEL = new SlimefunItemStack("SOLAR_PANEL", Material.DAYLIGHT_DETECTOR, "&e太阳能板", "", "&7利用阳光净化空气", "&7白天效率最高 &8| &7无需电力", "", "&e白天: &a高吸收率", "&7夜晚/雨天: &8低吸收率");
-    public static final SlimefunItemStack CLIMATE_CONTROLLER = new SlimefunItemStack("CLIMATE_CONTROLLER", Material.BEACON, "&b气候控制器", "", "&7在周围 &e7格 &7范围内", "&7创建温度舒适区", "&7保护玩家免受极端温度影响", "", LoreBuilder.machine(MachineTier.ADVANCED, MachineType.MACHINE), LoreBuilder.powerBuffer(256), LoreBuilder.powerPerSecond(8));
+    public static final SlimefunItemStack CLIMATE_CONTROLLER = new SlimefunItemStack("CLIMATE_CONTROLLER", Material.BEACON, "&b气候控制器", "", "&7在周围 &e7格 &7范围内", "&7创建温度舒适区", "&7保护玩家免受极端温度影响", "&7无需电力 &8| &7放置即可工作");
 
     static {
         ItemStack item = new ItemStack(Material.POTION);

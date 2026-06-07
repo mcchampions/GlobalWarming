@@ -61,7 +61,13 @@ public abstract class TemperatureMeter extends SlimefunItem implements HologramO
             Player p = e.getPlayer();
             Block b = e.getClickedBlock().get();
 
-            TemperatureType saved = TemperatureType.valueOf(BlockStorage.getLocationInfo(b.getLocation(), "type"));
+            String rawType = BlockStorage.getLocationInfo(b.getLocation(), "type");
+            TemperatureType saved;
+            try {
+                saved = TemperatureType.valueOf(rawType);
+            } catch (IllegalArgumentException | NullPointerException ex) {
+                saved = TemperatureType.CELSIUS;
+            }
 
             if (saved == TemperatureType.CELSIUS) {
                 saved = TemperatureType.FAHRENHEIT;

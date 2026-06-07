@@ -130,7 +130,9 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
             @Override
             public void tick(Block b) {
                 Location loc = b.getLocation();
-                updateHologram(b, GlobalWarmingPlugin.getTemperatureManager().getTemperatureString(loc, TemperatureType.valueOf(BlockStorage.getLocationInfo(loc, "type"))));
+                String rawType = BlockStorage.getLocationInfo(loc, "type");
+                TemperatureType type = rawType != null ? parseTemperatureScale(rawType) : TemperatureType.CELSIUS;
+                updateHologram(b, GlobalWarmingPlugin.getTemperatureManager().getTemperatureString(loc, type));
             }
         }.register(this);
 
@@ -142,7 +144,9 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
             @Override
             public void tick(Block b) {
                 Location loc = b.getLocation();
-                updateHologram(b, "&7环境变化: " + GlobalWarmingPlugin.getTemperatureManager().getAirQualityString(loc.getWorld(), TemperatureType.valueOf(BlockStorage.getLocationInfo(loc, "type"))));
+                String rawType = BlockStorage.getLocationInfo(loc, "type");
+                TemperatureType type = rawType != null ? parseTemperatureScale(rawType) : TemperatureType.CELSIUS;
+                updateHologram(b, "&7环境变化: " + GlobalWarmingPlugin.getTemperatureManager().getAirQualityString(loc.getWorld(), type));
             }
         }.register(this);
 
