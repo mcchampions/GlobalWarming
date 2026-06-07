@@ -1,8 +1,6 @@
 # 启用或禁用的世界
 worlds:
 - world
-- world_the_end
-- world_nether
 
 # 白名单 (whitelist) 或 黑名单 (blacklist) ，默认为黑名单模式
 world-filter-type: whitelist

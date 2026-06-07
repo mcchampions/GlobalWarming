@@ -9,11 +9,11 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.SimpleBlockBreakHandler;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 
+import me.poma123.globalwarming.GlobalWarmingPlugin;
 import me.poma123.globalwarming.api.PollutionManager;
 
 public class AirPurifier extends SlimefunItem {
@@ -40,12 +40,13 @@ public class AirPurifier extends SlimefunItem {
 
             @Override
             public void tick(Block b, SlimefunItem item, Config data) {
+                if (!GlobalWarmingPlugin.getRegistry().isWorldEnabled(b.getWorld().getName())) {
+                    return;
+                }
                 if (b.getWorld().getEnvironment() != org.bukkit.World.Environment.NORMAL) {
                     return;
                 }
-                // Passive pollution absorption every tick cycle
-                double absorbAmount = 0.01;
-                PollutionManager.descendPollutionInWorld(b.getWorld(), absorbAmount);
+                PollutionManager.descendPollutionInWorld(b.getWorld(), 0.01);
             }
         });
     }
