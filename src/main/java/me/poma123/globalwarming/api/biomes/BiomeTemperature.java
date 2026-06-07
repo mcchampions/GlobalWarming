@@ -1,7 +1,5 @@
 package me.poma123.globalwarming.api.biomes;
 
-import javax.annotation.Nonnull;
-
 import org.apache.commons.lang3.Validate;
 
 /**
@@ -16,21 +14,18 @@ public class BiomeTemperature {
     private final double temperature;
     private final double maxTemperatureDropAtNight;
 
-    @Nonnull
-    public BiomeTemperature(@Nonnull double temperature, @Nonnull double maxTemperatureDropAtNight) {
-        Validate.notNull(temperature, "The temperature value should not be null!");
-        Validate.notNull(maxTemperatureDropAtNight, "The maxTemperatureDropAtNight value should not be null!");
+    public BiomeTemperature(double temperature, double maxTemperatureDropAtNight) {
+        Validate.isTrue(Double.isFinite(temperature), "The temperature value must be finite!");
+        Validate.isTrue(Double.isFinite(maxTemperatureDropAtNight), "The maxTemperatureDropAtNight value must be finite!");
 
         this.temperature = temperature;
         this.maxTemperatureDropAtNight = maxTemperatureDropAtNight;
     }
 
-    @Nonnull
     public double getTemperature() {
         return temperature;
     }
 
-    @Nonnull
     public double getMaxTemperatureDropAtNight() {
         return maxTemperatureDropAtNight;
     }

@@ -44,7 +44,6 @@ public class AsyncWorldPollutionChangeEvent extends Event {
      *
      * @return the pollution amount before the change
      */
-    @Nonnull
     public double getOldValue() {
         return oldValue;
     }
@@ -54,7 +53,6 @@ public class AsyncWorldPollutionChangeEvent extends Event {
      *
      * @return the pollution amount after the change
      */
-    @Nonnull
     public double getNewValue() {
         return newValue;
     }

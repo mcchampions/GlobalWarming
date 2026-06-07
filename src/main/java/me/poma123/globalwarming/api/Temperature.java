@@ -15,36 +15,32 @@ public class Temperature {
     private double celsiusValue;
     private TemperatureType tempType = TemperatureType.CELSIUS;
 
-    public Temperature(@Nonnull double value) {
-        Validate.notNull(value, "The Temperature value should not be null!");
+    public Temperature(double value) {
+        Validate.isTrue(Double.isFinite(value), "The Temperature value must be finite!");
 
         this.celsiusValue = value;
     }
 
-    public Temperature(@Nonnull double value, @Nonnull TemperatureType type) {
-        Validate.notNull(value, "The Temperature value should not be null!");
+    public Temperature(double value, @Nonnull TemperatureType type) {
+        Validate.isTrue(Double.isFinite(value), "The Temperature value must be finite!");
         Validate.notNull(type, "The TemperatureType should not be null!");
 
         celsiusValue = value;
         tempType = type;
     }
 
-    @Nonnull
     public double getCelsiusValue() {
         return celsiusValue;
     }
 
-    @Nonnull
     public double getFahrenheitValue() {
         return celsiusValue * 1.8 + 32;
     }
 
-    @Nonnull
     public double getKelvinValue() {
         return celsiusValue + 273.15;
     }
 
-    @Nonnull
     public double getConvertedValue() {
         switch (tempType) {
             case FAHRENHEIT:

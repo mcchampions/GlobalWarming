@@ -1,9 +1,8 @@
 package me.poma123.globalwarming;
 
-import java.text.DecimalFormat;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
 
@@ -32,7 +31,7 @@ public class TemperatureManager {
     public static final String HOT = "☀";
     public static final String COLD = "❄";
 
-    private final Map<String, Map<Biome, Double>> worldTemperatureChangeFactorMap = new HashMap<>();
+    private final Map<String, Map<Biome, Double>> worldTemperatureChangeFactorMap = new ConcurrentHashMap<>();
 
     protected void runCalculationTask(long delay, long interval) {
         Bukkit.getScheduler().runTaskTimerAsynchronously(GlobalWarmingPlugin.getInstance(), () -> {
@@ -70,7 +69,7 @@ public class TemperatureManager {
             return new Temperature(0);
         }
 
-        return new Temperature(map.get(biome));
+        return new Temperature(map.getOrDefault(biome, 15.0));
     }
 
     public String getTemperatureString(@Nonnull Location loc, @Nonnull TemperatureType tempType) {
@@ -164,7 +163,7 @@ public class TemperatureManager {
         return new Temperature(celsiusValue);
     }
 
-    public static double getDifference(@Nonnull double currentValue, @Nonnull double defaultValue, @Nonnull TemperatureType type) {
+    public static double getDifference(double currentValue, double defaultValue, @Nonnull TemperatureType type) {
         double convertedCurrent = new Temperature(currentValue, type).getConvertedValue();
         double convertedDefault = new Temperature(defaultValue, type).getConvertedValue();
 
@@ -183,15 +182,11 @@ public class TemperatureManager {
     }
 
     public static double fixDouble(double amount, int digits) {
-        if (digits == 0)
+        if (digits == 0) {
             return (int) amount;
-        StringBuilder format = new StringBuilder("##");
-        for (int i = 0; i < digits; i++) {
-            if (i == 0)
-                format.append(".");
-            format.append("#");
         }
-        return Double.valueOf(new DecimalFormat(format.toString()).format(amount).replace(",", "."));
+        double factor = Math.pow(10, digits);
+        return Math.round(amount * factor) / factor;
     }
 
     public static double fixDouble(double amount) {

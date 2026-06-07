@@ -3,6 +3,7 @@ package me.poma123.globalwarming;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class Registry {
         try {
             this.biomeMap = loadBiomeMap(false);
         }
-        catch (BiomeMapException | FileNotFoundException x) {
+        catch (BiomeMapException | IOException x) {
             GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, x, () -> "无法加载生物群系地图 /plugins/GlobalWarming/biome-maps/, 使用默认设置");
         }
 
@@ -71,7 +72,7 @@ public class Registry {
             try {
                 this.biomeMap = loadBiomeMap(true);
             }
-            catch (BiomeMapException | FileNotFoundException x) {
+            catch (BiomeMapException | IOException x) {
                 GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, x, () -> "无法应用默认生物群系地图，请重新安装 GlobalWarming.");
                 GlobalWarmingPlugin.getInstance().getServer().getPluginManager().disablePlugin(GlobalWarmingPlugin.getInstance());
             }
@@ -86,7 +87,7 @@ public class Registry {
         }
         if (!missingBiomes.isEmpty()) {
             String path = biomeMap.getKey().getKey().replace("globalwarming_biomemap_", "");
-            GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "生物群系地图(\" + path + \")中，这些生物群系没有设置温度: \"{0}\"，将使用默认温度设置 (temp=15, max-temp-drop-at-night=0).", new Object[] {String.join(", ", missingBiomes)});
+            GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "生物群系地图({0})中，这些生物群系没有设置温度: {1}，将使用默认温度设置 (temp=15, max-temp-drop-at-night=0).", new Object[] {path, String.join(", ", missingBiomes)});
         }
 
         // Whitelisting or blacklisting worlds
@@ -183,7 +184,7 @@ public class Registry {
         }
     }
 
-    public BiomeMap<BiomeTemperature> loadBiomeMap(boolean internalResource) throws BiomeMapException, FileNotFoundException {
+    public BiomeMap<BiomeTemperature> loadBiomeMap(boolean internalResource) throws BiomeMapException, IOException {
         String path;
         if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_18)) {
             path = "post-1.18.json";
@@ -191,13 +192,17 @@ public class Registry {
             path = "pre-1.18.json";
         }
 
-        BufferedReader reader;
+        String json;
         if (internalResource) {
-            reader = new BufferedReader(new InputStreamReader(GlobalWarmingPlugin.getInstance().getClass().getResourceAsStream("/biome-maps/" + path), StandardCharsets.UTF_8));
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GlobalWarmingPlugin.getInstance().getClass().getResourceAsStream("/biome-maps/" + path), StandardCharsets.UTF_8))) {
+                json = reader.lines().collect(Collectors.joining(""));
+            }
         } else {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(GlobalWarmingPlugin.getInstance().getDataFolder() + "/biome-maps/" + path), StandardCharsets.UTF_8));
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(GlobalWarmingPlugin.getInstance().getDataFolder() + "/biome-maps/" + path), StandardCharsets.UTF_8))) {
+                json = reader.lines().collect(Collectors.joining(""));
+            }
         }
-        return BiomeMap.fromJson(new NamespacedKey(GlobalWarmingPlugin.getInstance(), "globalwarming_biomemap_" + path), reader.lines().collect(Collectors.joining("")), new BiomeTemperatureDataConverter(), true);
+        return BiomeMap.fromJson(new NamespacedKey(GlobalWarmingPlugin.getInstance(), "globalwarming_biomemap_" + path), json, new BiomeTemperatureDataConverter(), true);
     }
 
     public BiomeMap<BiomeTemperature> getBiomeMap() {

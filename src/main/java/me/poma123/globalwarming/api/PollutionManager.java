@@ -73,9 +73,9 @@ public class PollutionManager {
      *
      * @return whether the change was successful
      */
-    public static boolean risePollutionInWorld(@Nonnull World world, @Nonnull double value) {
+    public static boolean risePollutionInWorld(@Nonnull World world, double value) {
         Validate.notNull(world, "The World should not be null!");
-        Validate.notNull(world, "The pollution value should not be null!");
+        Validate.isTrue(Double.isFinite(value) && value >= 0, "The pollution value must be a finite non-negative number!");
 
         if (GlobalWarmingPlugin.getRegistry().isWorldEnabled(world.getName())) {
             Config config = GlobalWarmingPlugin.getRegistry().getWorldConfig(world);
@@ -88,7 +88,7 @@ public class PollutionManager {
                 Bukkit.getScheduler().runTaskAsynchronously(GlobalWarmingPlugin.getInstance(), () -> Bukkit.getPluginManager().callEvent(event));
 
                 config.setValue(DATA_PATH, value);
-                config.save();
+                saveConfigAsync(config);
                 return true;
             }
         }
@@ -105,9 +105,9 @@ public class PollutionManager {
      *
      * @return whether the change was successful
      */
-    public static boolean descendPollutionInWorld(@Nonnull World world, @Nonnull double value) {
+    public static boolean descendPollutionInWorld(@Nonnull World world, double value) {
         Validate.notNull(world, "The World should not be null!");
-        Validate.notNull(world, "The pollution value should not be null!");
+        Validate.isTrue(Double.isFinite(value) && value >= 0, "The pollution value must be a finite non-negative number!");
 
         if (GlobalWarmingPlugin.getRegistry().isWorldEnabled(world.getName())) {
             Config config = GlobalWarmingPlugin.getRegistry().getWorldConfig(world);
@@ -120,7 +120,7 @@ public class PollutionManager {
                 Bukkit.getScheduler().runTaskAsynchronously(GlobalWarmingPlugin.getInstance(), () -> Bukkit.getPluginManager().callEvent(event));
 
                 config.setValue(DATA_PATH, value);
-                config.save();
+                saveConfigAsync(config);
                 return true;
             }
         }
@@ -137,9 +137,9 @@ public class PollutionManager {
      *
      * @return whether the change was successful
      */
-    public static boolean setPollutionInWorld(@Nonnull World world, @Nonnull double newValue) {
+    public static boolean setPollutionInWorld(@Nonnull World world, double newValue) {
         Validate.notNull(world, "The World should not be null!");
-        Validate.notNull(world, "The pollution value should not be null!");
+        Validate.isTrue(Double.isFinite(newValue) && newValue >= 0, "The pollution value must be a finite non-negative number!");
 
         if (GlobalWarmingPlugin.getRegistry().isWorldEnabled(world.getName())) {
             Config config = GlobalWarmingPlugin.getRegistry().getWorldConfig(world);
@@ -151,11 +151,19 @@ public class PollutionManager {
                 Bukkit.getScheduler().runTaskAsynchronously(GlobalWarmingPlugin.getInstance(), () -> Bukkit.getPluginManager().callEvent(event));
 
                 config.setValue(DATA_PATH, newValue);
-                config.save();
+                saveConfigAsync(config);
                 return true;
             }
         }
         return false;
+    }
+
+    private static void saveConfigAsync(Config config) {
+        if (!Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTask(GlobalWarmingPlugin.getInstance(), (Runnable) config::save);
+        } else {
+            config.save();
+        }
     }
 
     /**

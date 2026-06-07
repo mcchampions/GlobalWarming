@@ -48,6 +48,11 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
     private Config messages;
 
     @Override
+    public void onDisable() {
+        Bukkit.getScheduler().cancelTasks(this);
+    }
+
+    @Override
     public void onEnable() {
         instance = this;
 
@@ -55,8 +60,8 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
 
         final File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) {
-            try {
-                Files.copy(this.getClass().getResourceAsStream("/messages.yml"), messagesFile.toPath());
+            try (java.io.InputStream in = this.getClass().getResourceAsStream("/messages.yml")) {
+                Files.copy(in, messagesFile.toPath());
             } catch (IOException e) {
                 getLogger().log(Level.SEVERE, "无法创建默认配置 messages.yml", e);
             }
@@ -71,8 +76,8 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         // Create biome map files
         final File pre118BiomeMap = new File(biomeMapDirectory, "pre-1.18.json");
         if (!pre118BiomeMap.exists()) {
-            try {
-                Files.copy(this.getClass().getResourceAsStream("/biome-maps/pre-1.18.json"), pre118BiomeMap.toPath());
+            try (java.io.InputStream in = this.getClass().getResourceAsStream("/biome-maps/pre-1.18.json")) {
+                Files.copy(in, pre118BiomeMap.toPath());
             } catch (IOException e) {
                 getLogger().log(Level.SEVERE, "无法创建默认配置 biome-maps/pre-1.18.json", e);
             }
@@ -80,8 +85,8 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
 
         final File post118BiomeMap = new File(biomeMapDirectory, "post-1.18.json");
         if (!post118BiomeMap.exists()) {
-            try {
-                Files.copy(this.getClass().getResourceAsStream("/biome-maps/post-1.18.json"), post118BiomeMap.toPath());
+            try (java.io.InputStream in = this.getClass().getResourceAsStream("/biome-maps/post-1.18.json")) {
+                Files.copy(in, post118BiomeMap.toPath());
             } catch (IOException e) {
                 getLogger().log(Level.SEVERE, "无法创建默认配置 biome-maps/post-1.18.json", e);
             }

@@ -1,8 +1,8 @@
 package me.poma123.globalwarming.listeners;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
@@ -34,8 +34,8 @@ public class PollutionListener implements Listener {
 
     private static final int BROADCAST_COOLDOWN = 60000;
 
-    private final Map<String, Long> lastWorldBroadcasts = new HashMap<>();
-    private final Map<String, Double> tempPollutionValues = new HashMap<>();
+    private final Map<String, Long> lastWorldBroadcasts = new ConcurrentHashMap<>();
+    private final Map<String, Double> tempPollutionValues = new ConcurrentHashMap<>();
 
     @EventHandler
     public void onMachineOperationComplete(AsyncMachineOperationFinishEvent e) {
@@ -118,15 +118,10 @@ public class PollutionListener implements Listener {
             lastWorldBroadcasts.put(world.getName(), System.currentTimeMillis());
 
             double amount = TemperatureManager.fixDouble(e.getNewValue() * GlobalWarmingPlugin.getRegistry().getPollutionMultiply());
-            if (!tempPollutionValues.containsKey(world.getName())) {
-                tempPollutionValues.put(world.getName(), amount);
-            } else {
-                if (tempPollutionValues.get(world.getName()) == amount) {
-                    return;
-                }
+            Double previous = tempPollutionValues.put(world.getName(), amount);
+            if (previous != null && previous.equals(amount)) {
+                return;
             }
-
-            tempPollutionValues.replace(world.getName(), amount);
 
             sendNews(world);
 

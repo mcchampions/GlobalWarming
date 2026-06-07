@@ -14,7 +14,7 @@ mechanics:
     # 是否启用
     enabled: true
     # 几率 (0-1)
-    chance: 0.3
+    chance: 0.2
     # 火焰传播速度
     fire-per-second: 10
     # 最低触发温度（摄氏度）
@@ -24,7 +24,7 @@ mechanics:
     # 是否启用
     enabled: true
     # 几率 (0-1)
-    chance: 0.5
+    chance: 0.2
     # 融化速度
     melt-per-second: 10
     # 最低触发温度（摄氏度）
@@ -32,13 +32,13 @@ mechanics:
   # 减速
   SLOWNESS:
     # 是否启用
-    enabled: true
+    enabled: false
     # 几率 (0-1)
     chance: 0.8
   # 燃烧
   BURN:
     # 是否启用
-    enabled: true
+    enabled: false
     # 几率
     chance: 0.8
 
