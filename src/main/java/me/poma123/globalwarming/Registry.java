@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -77,7 +79,7 @@ public class Registry {
 
         // Printing missing, unconfigured biomes
         List<String> missingBiomes = new ArrayList<>();
-        for (Biome biome : Biome.values()) {
+        for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
             if (!biomeMap.containsKey(biome)) {
                 missingBiomes.add(biome.toString());
             }

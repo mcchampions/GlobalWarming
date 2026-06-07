@@ -80,7 +80,7 @@ public class PollutionListener implements Listener {
         double pollutionValue = GlobalWarmingPlugin.getRegistry().getAnimalBreedPollution();
 
         if (pollutionValue > 0.0) {
-            PollutionManager.descendPollutionInWorld(world, pollutionValue);
+            PollutionManager.risePollutionInWorld(world, pollutionValue);
         }
     }
 

@@ -57,10 +57,10 @@ public class BurnTask extends MechanicTask {
                         Temperature temp = GlobalWarmingPlugin.getTemperatureManager().getTemperatureAtLocation(p.getLocation());
                         double celsiusValue = temp.getCelsiusValue();
 
-                        if (celsiusValue >= 50) {
-                            p.setFireTicks(30);
-                        } else if (celsiusValue >= 60){
+                        if (celsiusValue >= 60) {
                             p.setFireTicks(80);
+                        } else if (celsiusValue >= 50) {
+                            p.setFireTicks(30);
                         }
                     }
                 }

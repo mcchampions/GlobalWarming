@@ -38,8 +38,6 @@ import me.poma123.globalwarming.tasks.FireTask;
 import me.poma123.globalwarming.tasks.MeltTask;
 import me.poma123.globalwarming.tasks.SlownessTask;
 
-import net.guizhanss.guizhanlib.updater.GuizhanBuildsUpdater;
-
 public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
 
     private static GlobalWarmingPlugin instance;
@@ -52,11 +50,6 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
     @Override
     public void onEnable() {
         instance = this;
-
-        if (getConfig().getBoolean("options.auto-update") &&
-            getDescription().getVersion().startsWith("Build")) {
-            new GuizhanBuildsUpdater(this, getFile(), "ybw0014", "GlobalWarming-CN", "master", false).start();
-        }
 
         new Metrics(this, 9132);
 
@@ -191,7 +184,7 @@ public class GlobalWarmingPlugin extends JavaPlugin implements SlimefunAddon {
         registerResearch("air_compressor", 69696971, "空气压缩机", 40, Items.AIR_COMPRESSOR);
         registerResearch("canisters", 69696972, "污染存储", 6, Items.EMPTY_CANISTER, Items.CO2_CANISTER);
         registerResearch("filter", 69696973, "过滤", 8, Items.FILTER);
-        registerResearch("mercury", 69696973, "水银", 12, Items.CINNABARITE, Items.MERCURY);
+        registerResearch("mercury", 69696974, "水银", 12, Items.CINNABARITE, Items.MERCURY);
     }
 
     private void scheduleTasks() {

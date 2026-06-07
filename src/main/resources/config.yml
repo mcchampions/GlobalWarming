@@ -1,13 +1,11 @@
-# 自动更新
-options:
-  auto-update: true
-
 # 启用或禁用的世界
 worlds:
-- disabled_world
+- world
+- world_the_end
+- world_nether
 
 # 白名单 (whitelist) 或 黑名单 (blacklist) ，默认为黑名单模式
-world-filter-type: blacklist
+world-filter-type: whitelist
 
 # 机制
 mechanics:
