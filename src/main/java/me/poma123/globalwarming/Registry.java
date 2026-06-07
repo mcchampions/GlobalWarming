@@ -46,7 +46,7 @@ public class Registry {
     private final List<String> news = new ArrayList<>();
     private BiomeMap<BiomeTemperature> biomeMap;
     private final Set<String> enabledWorlds = ConcurrentHashMap.newKeySet();
-    private final Map<String, Config> worldConfigs = new HashMap<>();
+    private final Map<String, Config> worldConfigs = new ConcurrentHashMap<>();
     private final Map<Material, Double> pollutedVanillaItems = new EnumMap<>(Material.class);
     private final Map<String, Double> pollutedSlimefunItems = new HashMap<>();
     private final Map<String, Double> pollutedSlimefunMachines = new HashMap<>();
@@ -77,19 +77,22 @@ public class Registry {
             catch (BiomeMapException | IOException x) {
                 GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, x, () -> "无法应用默认生物群系地图，请重新安装 GlobalWarming.");
                 GlobalWarmingPlugin.getInstance().getServer().getPluginManager().disablePlugin(GlobalWarmingPlugin.getInstance());
+                return;
             }
         }
 
         // Printing missing, unconfigured biomes
         List<String> missingBiomes = new ArrayList<>();
-        for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
-            if (!biomeMap.containsKey(biome)) {
-                missingBiomes.add(biome.toString());
+        if (biomeMap != null) {
+            for (Biome biome : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
+                if (!biomeMap.containsKey(biome)) {
+                    missingBiomes.add(biome.toString());
+                }
             }
-        }
-        if (!missingBiomes.isEmpty()) {
-            String path = biomeMap.getKey().getKey().replace("globalwarming_biomemap_", "");
-            GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "生物群系地图({0})中，这些生物群系没有设置温度: {1}，将使用默认温度设置 (temp=15, max-temp-drop-at-night=0).", new Object[] {path, String.join(", ", missingBiomes)});
+            if (!missingBiomes.isEmpty()) {
+                String path = biomeMap.getKey().getKey().replace("globalwarming_biomemap_", "");
+                GlobalWarmingPlugin.getInstance().getLogger().log(Level.WARNING, "生物群系地图({0})中，这些生物群系没有设置温度: {1}，将使用默认温度设置 (temp=15, max-temp-drop-at-night=0).", new Object[] {path, String.join(", ", missingBiomes)});
+            }
         }
 
         // Whitelisting or blacklisting worlds
@@ -201,7 +204,11 @@ public class Registry {
 
         String json;
         if (internalResource) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GlobalWarmingPlugin.getInstance().getClass().getResourceAsStream("/biome-maps/" + path), StandardCharsets.UTF_8))) {
+            java.io.InputStream in = GlobalWarmingPlugin.getInstance().getClass().getResourceAsStream("/biome-maps/" + path);
+            if (in == null) {
+                throw new IOException("Missing internal resource: /biome-maps/" + path);
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                 json = reader.lines().collect(Collectors.joining(""));
             }
         } else {
@@ -246,10 +253,7 @@ public class Registry {
     @Nullable
     public Config getWorldConfig(@Nullable World world) {
         if (world != null && isWorldEnabled(world.getName())) {
-            if (!worldConfigs.containsKey(world.getName())) {
-                worldConfigs.put(world.getName(), getNewWorldConfig(world));
-            }
-            return worldConfigs.get(world.getName());
+            return worldConfigs.computeIfAbsent(world.getName(), k -> getNewWorldConfig(world));
         }
         return null;
     }
